@@ -1,0 +1,41 @@
+# Maven build directories
+target/
+mvnrepository/
+
+# NetBeans IDE files
+nbproject/
+nbactions.xml
+nb-configuration.xml
+
+# Compiled classes
+build/
+dist/
+nbbuild/
+nbdist/
+nbgit.properties
+
+# IDE-specific files
+.idea/
+*.iml
+
+# Logs and generated files
+log/
+*.log
+*.log.*
+*.access
+
+# Mac-specific
+.DS_Store
+
+# Windows-specific
+Thumbs.db
+ehthumbs.db
+
+# Eclipse-specific
+.classpath
+.project
+.settings/
+
+# NetBeans-specific
+build.xml
+nb-ide-version.xml
