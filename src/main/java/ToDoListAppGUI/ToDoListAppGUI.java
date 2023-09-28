@@ -7,6 +7,9 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ToDoListAppGUI extends javax.swing.JFrame {
    DefaultListModel<String> listModel = new DefaultListModel<>();
@@ -17,6 +20,33 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         initComponents();
         
     }
+    
+    
+    //Method to Save to file
+    private void saveToFile(String fileName) {
+        try (FileWriter writer = new FileWriter(fileName)) {
+            for (int i = 0; i < listModel.size(); i++) {
+                writer.write(listModel.getElementAt(i) + System.lineSeparator());
+            }
+            writer.close();
+        } catch (IOException ex) {
+            Logger.getLogger(ToDoListAppGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private void loadFromFile(String fileName) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                listModel.addElement(line);
+            }
+            reader.close();
+        } catch (IOException ex) {
+            Logger.getLogger(ToDoListAppGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    
     //Method to Sort task list by priority
     private void sortByPriority() {
         Comparator<String> priorityComparator = new Comparator<String>() {
@@ -50,7 +80,23 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
             listModel.addElement(element);
         }
     }
-
+    
+    
+    //Method to toggle complete status
+    private void toggleCompleteStatus() {
+    int selectedIndex = taskList.getSelectedIndex();
+    if (selectedIndex != -1) {
+        String selectedTask = listModel.get(selectedIndex);
+        if (selectedTask.contains("Complete: Yes")) {
+            selectedTask = selectedTask.replace("Complete: Yes", "Complete: No");
+        } else {
+            selectedTask = selectedTask.replace("Complete: No", "Complete: Yes");
+        }
+        listModel.setElementAt(selectedTask, selectedIndex);
+    }
+    }
+    
+    
     //Method to sort task list by due date
      private void sortByDueDate() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -119,8 +165,8 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         addButton = new javax.swing.JButton();
         editButton = new javax.swing.JButton();
-        deleteButton = new javax.swing.JButton();
         markButton = new javax.swing.JButton();
+        deleteButton = new javax.swing.JButton();
         nameField = new javax.swing.JTextField();
         taskDescriptionField = new javax.swing.JTextField();
         dueDateField = new javax.swing.JTextField();
@@ -137,8 +183,6 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         menuSort = new javax.swing.JMenu();
         sortDueDate = new javax.swing.JMenuItem();
         sortPriority = new javax.swing.JMenuItem();
-
-        editDialog.setPreferredSize(new java.awt.Dimension(1000, 342));
 
         nameField1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -233,11 +277,6 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        taskList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
         jScrollPane1.setViewportView(taskList);
 
         jScrollPane2.setViewportView(jScrollPane1);
@@ -256,17 +295,17 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
             }
         });
 
-        deleteButton.setText("Mark");
-        deleteButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteButtonActionPerformed(evt);
-            }
-        });
-
-        markButton.setText("Delete");
+        markButton.setText("Mark");
         markButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 markButtonActionPerformed(evt);
+            }
+        });
+
+        deleteButton.setText("Delete");
+        deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteButtonActionPerformed(evt);
             }
         });
 
@@ -280,9 +319,9 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
                 .addGap(34, 34, 34)
                 .addComponent(editButton)
                 .addGap(36, 36, 36)
-                .addComponent(deleteButton)
-                .addGap(31, 31, 31)
                 .addComponent(markButton)
+                .addGap(31, 31, 31)
+                .addComponent(deleteButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -292,8 +331,8 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addButton)
                     .addComponent(editButton)
-                    .addComponent(markButton)
-                    .addComponent(deleteButton))
+                    .addComponent(deleteButton)
+                    .addComponent(markButton))
                 .addGap(15, 73, Short.MAX_VALUE))
         );
 
@@ -328,6 +367,11 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         menuFile.add(fileSave);
 
         fileLoad.setText("Load");
+        fileLoad.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileLoadActionPerformed(evt);
+            }
+        });
         menuFile.add(fileLoad);
 
         fileExit.setText("Exit");
@@ -411,7 +455,13 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void fileSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileSaveActionPerformed
-        // TODO add your handling code here:
+     javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+        int userChoice = fileChooser.showSaveDialog(this);
+        if (userChoice == javax.swing.JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String fileName = fileToSave.getAbsolutePath();
+            saveToFile(fileName);
+        }
     }//GEN-LAST:event_fileSaveActionPerformed
 
     private void sortDueDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortDueDateActionPerformed
@@ -423,23 +473,24 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     String taskDescription = taskDescriptionField.getText();
     String dueDate = dueDateField.getText();
     String priority = priorityField.getText();
+    String complete = "No"; 
 
     if (!taskName.isEmpty()) {
-        String task ="Task Name: "+ taskName + ", Description: " + taskDescription + ", Due Date: " + dueDate + ", Priority: " + priority;
+        String task ="Task Name: "+ taskName + ", Description: " + taskDescription + ", Due Date: " + dueDate + ", Priority: " + priority + "Complete: " + complete;
         listModel.addElement(task);
         
         taskList.setModel(listModel);
         }
     }//GEN-LAST:event_addButtonActionPerformed
 
-    private void markButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_markButtonActionPerformed
-       
- 
-    }//GEN-LAST:event_markButtonActionPerformed
-
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-    removeSelectedItem();
+       removeSelectedItem(); 
+ 
     }//GEN-LAST:event_deleteButtonActionPerformed
+
+    private void markButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_markButtonActionPerformed
+   toggleCompleteStatus();
+    }//GEN-LAST:event_markButtonActionPerformed
 
     private void priorityFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_priorityFieldActionPerformed
         // TODO add your handling code here:
@@ -454,7 +505,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_nameField1ActionPerformed
 
     private void priorityField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_priorityField1ActionPerformed
-       sortByPriority();
+     
     }//GEN-LAST:event_priorityField1ActionPerformed
 
     private void taskDescriptionField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_taskDescriptionField1ActionPerformed
@@ -462,7 +513,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_taskDescriptionField1ActionPerformed
 
     private void sortPriorityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortPriorityActionPerformed
-        // TODO add your handling code here:
+            sortByPriority();       
     }//GEN-LAST:event_sortPriorityActionPerformed
 
     private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editButtonActionPerformed
@@ -509,6 +560,16 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         editDialog.dispose();
     }
     }//GEN-LAST:event_saveEditActionPerformed
+
+    private void fileLoadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileLoadActionPerformed
+        javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+        int userChoice = fileChooser.showOpenDialog(this);
+        if (userChoice == javax.swing.JFileChooser.APPROVE_OPTION) {
+            File fileToLoad = fileChooser.getSelectedFile();
+            String fileName = fileToLoad.getAbsolutePath();
+            loadFromFile(fileName);
+        }
+    }//GEN-LAST:event_fileLoadActionPerformed
    
 
         public static void main(String args[]) {
