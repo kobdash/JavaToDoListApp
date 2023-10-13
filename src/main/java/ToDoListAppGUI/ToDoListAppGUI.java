@@ -10,6 +10,8 @@ import javax.swing.DefaultListModel;
 import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+
 
 public class ToDoListAppGUI extends javax.swing.JFrame {
    DefaultListModel<String> listModel = new DefaultListModel<>();
@@ -34,11 +36,13 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         }
     }
     
+    //Method to Load from file
     private void loadFromFile(String fileName) {
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 listModel.addElement(line);
+                taskList.setModel(listModel);
             }
             reader.close();
         } catch (IOException ex) {
@@ -47,57 +51,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     }
     
     
-    //Method to Sort task list by priority
-    private void sortByPriority() {
-        Comparator<String> priorityComparator = new Comparator<String>() {
-            @Override
-            public int compare(String task1, String task2) {
-                int priority1 = extractPriority(task1);
-                int priority2 = extractPriority(task2);
-
-                // Compare the priorities
-                return Integer.compare(priority1, priority2);
-            }
-
-            private int extractPriority(String task) {
-                String priorityStr = task.substring(task.indexOf("Priority:") + 10);
-                try {
-                    return Integer.parseInt(priorityStr);
-                } catch (NumberFormatException e) {
-                    // Handle parsing exception
-                    e.printStackTrace();
-                    return 0;
-                }
-            }
-        };
-
-        List<String> elements = Collections.list(listModel.elements());
-
-        Collections.sort(elements, priorityComparator);
-
-        listModel.clear();
-        for (String element : elements) {
-            listModel.addElement(element);
-        }
-    }
-    
-    
-    //Method to toggle complete status
-    private void toggleCompleteStatus() {
-    int selectedIndex = taskList.getSelectedIndex();
-    if (selectedIndex != -1) {
-        String selectedTask = listModel.get(selectedIndex);
-        if (selectedTask.contains("Complete: Yes")) {
-            selectedTask = selectedTask.replace("Complete: Yes", "Complete: No");
-        } else {
-            selectedTask = selectedTask.replace("Complete: No", "Complete: Yes");
-        }
-        listModel.setElementAt(selectedTask, selectedIndex);
-    }
-    }
-    
-    
-    //Method to sort task list by due date
+     //Method to sort task list by due date
      private void sortByDueDate() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 
@@ -135,6 +89,63 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
             listModel.addElement(element);
         }
     }
+    
+    //Method to Sort task list by priority
+  private void sortByPriority() {
+    // Create a custom comparator for sorting based on priority
+    Comparator<String> priorityComparator = new Comparator<String>() {
+        @Override
+        public int compare(String task1, String task2) {
+            // Extract the priorities from the task strings
+            String priorityStr1 = task1.substring(task1.indexOf("Priority: ") + 10, task1.indexOf(", Complete: "));
+            String priorityStr2 = task2.substring(task2.indexOf("Priority: ") + 10, task2.indexOf(", Complete: "));
+
+            try {
+                // Parse the priority values as integers for comparison
+                int priority1 = Integer.parseInt(priorityStr1);
+                int priority2 = Integer.parseInt(priorityStr2);
+
+                // Compare the priorities
+                return Integer.compare(priority2, priority1);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                return 0; // Handle parsing exception
+            }
+        }
+    };
+
+    // Get the elements from listModel as a list
+    List<String> elements = Collections.list(listModel.elements());
+
+    // Sort the elements using the custom comparator
+    Collections.sort(elements, priorityComparator);
+
+    // Clear the existing listModel and add the sorted elements back
+    listModel.clear();
+    for (String element : elements) {
+        listModel.addElement(element);
+    }
+}
+
+
+    
+    
+    //Method to toggle complete status
+    private void toggleCompleteStatus() {
+    int selectedIndex = taskList.getSelectedIndex();
+    if (selectedIndex != -1) {
+        String selectedTask = listModel.get(selectedIndex);
+        if (selectedTask.contains("Complete: Yes")) {
+            selectedTask = selectedTask.replace("Complete: Yes", "Complete: No");
+        } else {
+            selectedTask = selectedTask.replace("Complete: No", "Complete: Yes");
+        }
+        listModel.setElementAt(selectedTask, selectedIndex);
+    }
+    }
+    
+    
+   
 
     
      private void removeSelectedItem() {
@@ -144,6 +155,27 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     }
 }
 
+     private boolean isValidDateFormat(String date) {
+    try {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+        dateFormat.parse(date);
+        return true;
+    } catch (ParseException e) {
+        return false;
+    }
+}
+
+private boolean isValidPriority(String priority) {
+    try {
+        int parsedPriority = Integer.parseInt(priority);
+        if (parsedPriority >= 1 && parsedPriority <= 9) {
+            return true;
+        }
+    } catch (NumberFormatException e) {
+        // Handle parsing exceptions (e.g., non-integer input)
+    }
+    return false;
+}
     
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -175,6 +207,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        jOptionPane = new javax.swing.JOptionPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         menuFile = new javax.swing.JMenu();
         fileSave = new javax.swing.JMenuItem();
@@ -193,6 +226,12 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         taskDescriptionField1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 taskDescriptionField1ActionPerformed(evt);
+            }
+        });
+
+        dueDateField1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dueDateField1ActionPerformed(evt);
             }
         });
 
@@ -215,9 +254,9 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
 
         jLabel6.setText("Task Description");
 
-        jLabel7.setText("Due Date");
+        jLabel7.setText("Due Date (MM/dd/yyyy)");
 
-        jLabel8.setText("Priority");
+        jLabel8.setText("Priority (Between 1-9)");
 
         javax.swing.GroupLayout editDialogLayout = new javax.swing.GroupLayout(editDialog.getContentPane());
         editDialog.getContentPane().setLayout(editDialogLayout);
@@ -244,10 +283,10 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
                             .addGroup(editDialogLayout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addGroup(editDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel8))))))
-                .addContainerGap(349, Short.MAX_VALUE))
+                                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                .addContainerGap(227, Short.MAX_VALUE))
         );
         editDialogLayout.setVerticalGroup(
             editDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -276,6 +315,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Java To Do App");
 
         jScrollPane1.setViewportView(taskList);
 
@@ -342,6 +382,12 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
             }
         });
 
+        taskDescriptionField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                taskDescriptionFieldActionPerformed(evt);
+            }
+        });
+
         priorityField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 priorityFieldActionPerformed(evt);
@@ -352,9 +398,9 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
 
         jLabel2.setText("Task Description");
 
-        jLabel3.setText("Due Date");
+        jLabel3.setText("Due Date  (MM/dd/yyyy)");
 
-        jLabel4.setText("Priority");
+        jLabel4.setText("Priority (Between 1-9)");
 
         menuFile.setText("File");
 
@@ -423,7 +469,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
                             .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(0, 347, Short.MAX_VALUE)))
+                        .addGap(0, 303, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -469,18 +515,29 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_sortDueDateActionPerformed
 
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
-        String taskName = nameField.getText();
+    String taskName = nameField.getText();
     String taskDescription = taskDescriptionField.getText();
     String dueDate = dueDateField.getText();
     String priority = priorityField.getText();
     String complete = "No"; 
 
     if (!taskName.isEmpty()) {
-        String task ="Task Name: "+ taskName + ", Description: " + taskDescription + ", Due Date: " + dueDate + ", Priority: " + priority + "Complete: " + complete;
-        listModel.addElement(task);
-        
-        taskList.setModel(listModel);
+        // Check if the dueDate is a valid date format
+        if (isValidDateFormat(dueDate)) {
+            // Check if priority is a number
+            if (isValidPriority(priority)) {
+                String task = "Task Name: " + taskName + ", Description: " + taskDescription + ", Due Date: " + dueDate + ", Priority: " + priority + ", Complete: " + complete;
+                listModel.addElement(task);
+                taskList.setModel(listModel);
+            } else {
+                // Show an error message or handle invalid priority
+                JOptionPane.showMessageDialog(this, "Invalid Priority. Please enter a number between 1 and 9.");
+            }
+        } else {
+            // Show an error message or handle invalid date format
+            JOptionPane.showMessageDialog(this, "Invalid Due Date Format. Please use MM/dd/yyyy.");
         }
+    }
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
@@ -527,7 +584,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
         String taskName = parts[0].substring(parts[0].indexOf("Task Name: ") + 11);
         String taskDescription = parts[1].substring(parts[1].indexOf("Description: ") + 13);
         String dueDate = parts[2].substring(parts[2].indexOf("Due Date: ") + 10);
-        String priority = parts[3].substring(parts[3].indexOf("Priority: ") + 10);
+        String priority = parts[3].substring(parts[3].indexOf("Priority: ") + 10, parts[3].indexOf("Priority: ") + 11);
 
         // Set the values in the editDialog's text fields
         nameField1.setText(taskName);
@@ -543,22 +600,33 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_editButtonActionPerformed
 
     private void saveEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveEditActionPerformed
-      if (selectedIndex != -1) {
-        String editedTaskName = nameField1.getText();
-        String editedTaskDescription = taskDescriptionField1.getText();
-        String editedDueDate = dueDateField1.getText();
-        String editedPriority = priorityField1.getText();
+     if (selectedIndex != -1) {
+    String editedTaskName = nameField1.getText();
+    String editedTaskDescription = taskDescriptionField1.getText();
+    String editedDueDate = dueDateField1.getText();
+    String editedPriority = priorityField1.getText();
+    String complete = "No"; 
 
-        // Create the edited item string
-        String editedItem = "Task Name: " + editedTaskName + ", Description: " + editedTaskDescription +
-                ", Due Date: " + editedDueDate + ", Priority: " + editedPriority;
+    // Check if the editedDueDate is a valid date format
+    if (isValidDateFormat(editedDueDate)) {
+        // Check if the editedPriority is a valid number
+        if (isValidPriority(editedPriority)) {
+            // Create the edited item string
+            String editedItem = "Task Name: " + editedTaskName + ", Description: " + editedTaskDescription +
+                    ", Due Date: " + editedDueDate + ", Priority: " + editedPriority + "Complete: " + complete;;
 
-        // Update the selected item in listModel
-        listModel.setElementAt(editedItem, selectedIndex);
+            // Update the selected item in listModel
+            listModel.setElementAt(editedItem, selectedIndex);
 
-        // Close the dialog
-        editDialog.dispose();
+            // Close the dialog
+            editDialog.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Invalid Priority. Please enter a number between 1 and 9.");
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Invalid Due Date Format. Please use MM/dd/yyyy.");
     }
+}
     }//GEN-LAST:event_saveEditActionPerformed
 
     private void fileLoadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileLoadActionPerformed
@@ -570,6 +638,14 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
             loadFromFile(fileName);
         }
     }//GEN-LAST:event_fileLoadActionPerformed
+
+    private void dueDateField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dueDateField1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_dueDateField1ActionPerformed
+
+    private void taskDescriptionFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_taskDescriptionFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_taskDescriptionFieldActionPerformed
    
 
         public static void main(String args[]) {
@@ -604,6 +680,7 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JOptionPane jOptionPane;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
@@ -622,3 +699,5 @@ public class ToDoListAppGUI extends javax.swing.JFrame {
     private javax.swing.JList<String> taskList;
     // End of variables declaration//GEN-END:variables
 }
+
+
